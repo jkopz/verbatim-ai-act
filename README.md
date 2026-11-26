@@ -43,8 +43,26 @@ Architecture decision records live in [docs/adr](docs/adr):
 
 - [0001 Topic choice](docs/adr/0001-topic-choice.md)
 - [0002 Python tooling](docs/adr/0002-python-tooling.md)
+- [0003 Corpus version](docs/adr/0003-corpus-version.md)
+- [0004 HTML parser](docs/adr/0004-html-parser.md)
 
 ## Licence and data sources
 
-Code under the [MIT licence](LICENSE). Legal texts come from EUR-Lex and are not stored in
-this repo. Details follow in `docs/data-licenses.md` (phase 1).
+Code under the [MIT licence](LICENSE).
+
+The corpus is built from [EUR-Lex](https://eur-lex.europa.eu) (© European Union, reuse under
+Decision 2011/833/EU):
+
+| Act | Articles and annexes | Recitals |
+| --- | --- | --- |
+| AI Act, Regulation (EU) 2024/1689 | Consolidated text of 27 July 2026, including the Digital Omnibus (Regulation (EU) 2026/1744) | Official Journal |
+| GDPR, Regulation (EU) 2016/679 | Consolidated text including the 2018 corrigendum | Official Journal |
+
+Consolidated texts are a documentation tool without legal effect. Only the Official Journal is
+authentic. See [ADR 0003](docs/adr/0003-corpus-version.md),
+[data licences](docs/data-licenses.md) and the
+[Omnibus status note](data/status/digital-omnibus.md).
+
+```bash
+make corpus   # download the sources (checked by sha256) and rebuild data/processed
+```

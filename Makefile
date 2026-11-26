@@ -1,4 +1,4 @@
-.PHONY: install lint format typecheck unit test
+.PHONY: install lint format typecheck unit test fetch corpus
 
 install: ## Create .venv from uv.lock and install git hooks
 	uv sync --locked
@@ -19,3 +19,9 @@ unit:
 	uv run pytest
 
 test: lint typecheck unit ## Everything CI runs
+
+fetch: ## Download the legal texts into data/raw (checked against data/sources.toml)
+	uv run python -m verbatim.ingestion.fetch
+
+corpus: fetch ## Rebuild data/processed from data/raw
+	uv run python -m verbatim.ingestion.build

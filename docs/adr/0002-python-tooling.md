@@ -32,6 +32,8 @@ checks locally and in CI. These are development dependencies only; nothing ships
 
 ## Consequences
 
+- uv uses its own managed Python builds (`python-preference = "only-managed"`), not system
+  installs, so every machine gets the same interpreter with working root certificates.
 - `make test` is the single command for lint, types and tests, locally and in CI.
 - CI installs with `uv sync --locked` and fails if the lockfile is out of date.
 - Strict pyright means untyped third-party libraries may need stubs or targeted ignores.
