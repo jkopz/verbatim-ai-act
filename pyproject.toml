@@ -9,6 +9,11 @@ dependencies = [
     "beautifulsoup4>=4.15.0",
 ]
 
+[tool.uv]
+# Use uv-managed Python builds instead of system installs. The python.org installer on macOS
+# ships without root certificates, which breaks HTTPS downloads (make fetch).
+python-preference = "only-managed"
+
 [build-system]
 requires = ["uv_build>=0.11,<0.12"]
 build-backend = "uv_build"
