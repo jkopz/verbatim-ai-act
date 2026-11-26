@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+dist/
+build/
+*.egg-info/
+
+# Tool caches
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Secrets: configuration only via environment variables
+.env
+.env.*
+!.env.example
+
+# Raw legal texts are downloaded by data/fetch.py, never committed
+data/raw/
+
+# Editors / OS
+.DS_Store
+.idea/
