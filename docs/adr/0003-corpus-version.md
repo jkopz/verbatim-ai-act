@@ -52,5 +52,12 @@ exactly the text it was checked against.
   EUR-Lex, which is not legally binding, and link to the Official Journal.
 - Recitals of the original GDPR do not reflect the corrigenda. This is recorded as a known
   limitation.
+- Known parser limitations, pinned in `tests/unit/test_corpus.py`:
+  - Annexes VII, VIII and X restart their point numbering per section, and Article 43(1) of
+    the AI Act has points (a) and (b) in two subparagraphs. The structural path does not yet
+    record sections or subparagraphs, so references such as "Annex VIII, point 1" are
+    ambiguous.
+  - Articles 102 to 110 of the AI Act amend other regulations and quote their text. The
+    quoted parts are kept as plain text, which leaves a few fragment blocks such as `;`.
 - New consolidated versions appear when an act is amended again. The source manifest pins
   the version, so an update is a deliberate change with new tests.
