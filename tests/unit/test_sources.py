@@ -2,8 +2,8 @@ from pathlib import Path
 
 import pytest
 
-from verbatim.ingestion.fetch import ChecksumMismatchError, sanitize, sha256_hex, verify
-from verbatim.ingestion.sources import load_sources
+from verbatim.ingestion.fetch import ChecksumMismatchError, fetch, sanitize, sha256_hex, verify
+from verbatim.ingestion.sources import Source, load_sources
 
 MANIFEST = Path(__file__).parents[2] / "data" / "sources.toml"
 
@@ -32,3 +32,19 @@ def test_verify_accepts_matching_and_rejects_changed_content() -> None:
     verify(content, sha256_hex(content), name="doc")
     with pytest.raises(ChecksumMismatchError):
         verify(b"<p>Article 2</p>", sha256_hex(content), name="doc")
+
+
+def test_fetch_accepts_a_hand_downloaded_file_with_scripts(tmp_path: Path) -> None:
+    clean = b"<p>Article 1</p>"
+    (tmp_path / "TEST.html").write_bytes(b"<script>tracking()</script>" + clean)
+    source = Source(
+        celex="TEST",
+        act="ai-act",
+        version_date="2026-07-27",
+        status="consolidated",
+        language="en",
+        url="https://example.invalid/TEST",
+        sha256=sha256_hex(clean),
+    )
+    assert fetch(source, tmp_path) is False  # no download needed
+    assert (tmp_path / "TEST.html").read_bytes() == clean

@@ -54,7 +54,10 @@ def fetch(source: Source, raw_dir: Path) -> bool:
     """Make sure data/raw/<celex>.html exists and matches the manifest. True if downloaded."""
     target = raw_dir / f"{source.celex}.html"
     if target.exists():
-        verify(target.read_bytes(), source.sha256, name=source.celex)
+        # Sanitize again: a file saved by hand from a browser still contains the scripts.
+        content = sanitize(target.read_bytes())
+        verify(content, source.sha256, name=source.celex)
+        target.write_bytes(content)
         return False
     content = sanitize(download(source.url))
     verify(content, source.sha256, name=source.celex)
