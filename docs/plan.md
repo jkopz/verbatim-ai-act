@@ -9,7 +9,7 @@ Verbatim is an assistant for the EU AI Act and the GDPR that answers questions w
 - **Evaluation first.** The test set is written before the system exists, so the system is never measured against answers that shaped it.
 - **Every statement needs a source.** A validator checks without any language model that the quoted passage appears verbatim in the legal text.
 - **The assistant may abstain.** If the corpus has nothing on a question, it says so. This is measured too.
-- **The date of the law matters.** According to [LeasEurope](https://www.leaseurope.org/new-application-dates-high-risk-ai-system-rules) the Digital Omnibus moves the high-risk obligations to 2 December 2027 for stand-alone systems and 2 August 2028 for systems embedded in products. An assistant that still says 2 August 2026 is wrong. This is a fixed test case for time-aware answers. [Born City](https://borncity.com/news/eu-ai-act-hochrisiko-ki-systeme-bekommen-bis-dezember-2027-zeit/) reports that the agreement was confirmed in June 2026. This must be checked against the Official Journal before it is treated as fact.
+- **The date of the law matters.** The Digital Omnibus on AI (Regulation (EU) 2026/1744, OJ L, 2026/1744, 24.7.2026, effective 27 July 2026) moves the high-risk obligations to 2 December 2027 for Annex III systems and 2 August 2028 for Annex I systems. An assistant that still says 2 August 2026 is wrong. This is a fixed test case for time-aware answers. Details in `data/status/digital-omnibus.md`.
 - **No costs.** Free tiers and local models. One command reproduces the results.
 - **No legal advice.** The assistant is a research tool. The UI and the README say so.
 - **Every decision is documented.** Short decision records (ADRs) state why something was chosen and which alternatives were considered.
@@ -70,15 +70,16 @@ verbatim/
     adr/                    decision records, one per file
     architecture.md  results.md  limits.md  data-licenses.md
   data/
-    fetch.py                downloads the legal texts, raw files stay out of the repo
-    processed/              structured articles as JSON
+    sources.toml            source documents with CELEX, URL and sha256
+    status/                 notes on the legal status, e.g. the Digital Omnibus
+    processed/              structured articles as JSON (raw HTML stays out of the repo)
   eval/
     testset/                dev.jsonl  test.jsonl  labeling-guide.md
     judge/                  judge prompt and calibration data
     run.py  metrics.py  report.py
     runs/                   cached answers and results per variant
   src/verbatim/
-    ingestion/              parser, chunking, embeddings
+    ingestion/              download, parser, chunking, embeddings
     retrieval/              dense, BM25, hybrid, reranker
     llm/                    provider abstraction, fallback chain, cache
     agent/                  state graph, tools, risk classification
@@ -88,7 +89,7 @@ verbatim/
     unit/  integration/  eval_smoke/
 ```
 
-- The raw texts stay out of the repo. A script downloads them, which avoids licence questions and keeps the repo small.
+- The raw HTML stays out of the repo. `make fetch` downloads it and checks it against the sha256 in `data/sources.toml`. The parsed texts in `data/processed/` are committed so tests run without network access. EUR-Lex permits reuse with attribution (see `docs/data-licenses.md`).
 - `eval/runs/` holds cached model answers. That makes the evaluation deterministic in CI and independent of API keys.
 - `docs/adr/` records every real choice (vector store, agent approach, chunking) with its alternatives.
 
@@ -114,13 +115,13 @@ Ten phases. Each ends with a result that can be checked. Each phase is developed
 
 **Result.** Structured legal texts with metadata.
 
-1. Fix the sources. The AI Act (Regulation (EU) 2024/1689) and the GDPR (Regulation (EU) 2016/679), recitals, annexes and a status file on the Digital Omnibus. Start with the English texts. German versions are an optional extension later.
+1. Fix the sources. The AI Act (Regulation (EU) 2024/1689) and the GDPR (Regulation (EU) 2016/679), recitals, annexes and a status file on the Digital Omnibus. Articles come from the consolidated texts, recitals from the Official Journal (ADR 0003). Start with the English texts. German versions are an optional extension later.
 2. A script downloads the texts from EUR-Lex. If automated access is blocked, the files are downloaded by hand into `data/raw/`.
 3. The parser splits into article, paragraph, point, recital and annex.
 4. Every piece carries metadata (legal act, reference, language, as-of date, URL).
 5. Check the reuse conditions and record them in `data-licenses.md`.
 
-**Done when** parser tests confirm the structure. The AI Act should yield 113 articles and 13 annexes and the GDPR 99 articles. These numbers are checked against the source before they are hard-coded in tests.
+**Done when** parser tests confirm the structure. Checked against the source: the consolidated AI Act (27 July 2026) yields 119 articles and 14 annexes, the original AI Act 113 articles, 13 annexes and 180 recitals, and the GDPR 99 articles and 173 recitals.
 
 **Key question.** Why split by legal structure instead of fixed character lengths?
 
@@ -382,7 +383,7 @@ The biggest content risk is that the gold labels reflect one reading of the law.
 | Free limits change | Provider abstraction, cache, example mode |
 | Visitors enter confidential data | Warning notice, no storage of inputs, logs without content |
 | Answers look like legal advice | Notice in UI and README, abstention without a basis, citation check |
-| Licence of the texts is unclear | Maintain `data-licenses.md`, keep raw texts out of the repo |
+| Licence of the texts is unclear | Reuse terms recorded in `data-licenses.md`, every document attributed by CELEX and URL |
 | Scope grows | Every phase has a done criterion, extensions only after phase 9 |
 
 ## README outline
@@ -399,8 +400,9 @@ The biggest content risk is that the gold labels reflect one reading of the law.
 
 ## Sources
 
-Figures from search results as of 26 November 2026. Free-tier limits and the Omnibus dates are snapshots and need checking before use.
+Free-tier figures come from search results as of 26 November 2026 and need checking before use. The Omnibus dates were verified against the Official Journal on the same day.
 
+- [Regulation (EU) 2026/1744 (Digital Omnibus on AI), EUR-Lex](https://eur-lex.europa.eu/legal-content/EN/ALL/?uri=CELEX:32026R1744)
 - [LeasEurope, new application dates for high-risk AI](https://www.leaseurope.org/new-application-dates-high-risk-ai-system-rules)
 - [Born City, high-risk AI until December 2027](https://borncity.com/news/eu-ai-act-hochrisiko-ki-systeme-bekommen-bis-dezember-2027-zeit/)
 - [DEV Community, 9 free LLM APIs in 2026](https://dev.to/0012303/9-free-llm-apis-in-2026-you-can-use-without-a-credit-card-26g8)
