@@ -32,8 +32,8 @@ TESTSET := eval/testset
 LABELING := $(TESTSET)/labeling
 EVAL := uv run python -m verbatim.evaluation.cli
 
-check-testset: ## Validate test set files: make check-testset [FILE=eval/testset/labeling/pass1.jsonl]
-	$(EVAL) check $(or $(FILE),$(wildcard $(LABELING)/*.jsonl $(TESTSET)/dev.jsonl $(TESTSET)/test.jsonl))
+check-testset: ## Validate the split, or one file: make check-testset [FILE=eval/testset/labeling/pass1.jsonl]
+	$(EVAL) check $(or $(FILE),$(wildcard $(TESTSET)/dev.jsonl $(TESTSET)/test.jsonl),$(error No split yet, pass FILE=...))
 
 lookup: ## Show the text of a reference: make lookup ACT=ai-act REF="Art. 6(2)" [AS_OF=2026-11-27]
 	$(EVAL) lookup $(ACT) "$(REF)" $(if $(AS_OF),--as-of $(AS_OF))

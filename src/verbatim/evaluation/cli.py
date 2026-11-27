@@ -97,7 +97,8 @@ def main(argv: list[str] | None = None) -> int:
             print(f"{args.pass2} exists, not overwriting it", file=sys.stderr)
             return 1
         rows = blank_template(load_testset(args.pass1), seed=TEMPLATE_SEED)
-        args.pass2.write_text("".join(json.dumps(r, ensure_ascii=False) + "\n" for r in rows))
+        text = "".join(json.dumps(r, ensure_ascii=False) + "\n" for r in rows)
+        args.pass2.write_text(text, encoding="utf-8")
         print(f"{args.pass2}: {len(rows)} questions without labels")
         return 0
     if args.command == "agreement":
