@@ -263,7 +263,7 @@ The target is about 100 questions across these categories. The examples are idea
 Rules.
 
 - The test set is written before the system and split into dev and test. The test split is opened only for final results.
-- A language model may suggest questions. Gold references and required points are set by hand.
+- A language model may suggest questions. Gold references and the content of required points should be decided by the maintainer. Any use of a model for wording or labels is recorded in the labelling guide.
 - Ambiguous questions get a clear rule in the labeling guide or are dropped.
 - Language models know these laws from training. A variant without retrieval makes visible what retrieval really adds.
 
@@ -367,7 +367,7 @@ Code is written with the help of a coding assistant. Decisions and evaluation de
 
 ### Done by hand, not by a language model
 
-- The gold test set and the labeling guide.
+- The decisions in the gold test set and the labeling guide.
 - The metric definitions and the calibration of the judge.
 - The error analysis and the conclusions in the README.
 - The architecture decisions (vector store, agent approach, chunking).

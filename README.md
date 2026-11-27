@@ -27,8 +27,8 @@ make test      # lint, type check, tests
 
 ## How the evaluation works
 
-The gold test set is written by hand before the system exists, labelled twice and split
-into dev and test. See the [labelling guide](eval/testset/labeling-guide.md).
+The gold test set is created before the system exists. It is labelled twice and split into dev and
+test. Part of the labels were drafted with a language model, as recorded in the guide. See the [labelling guide](eval/testset/labeling-guide.md).
 
 *Metrics, judge and its calibration are coming in phase 6.*
 

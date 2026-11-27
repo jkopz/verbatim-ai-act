@@ -100,10 +100,22 @@ ones and takes care of ids and the file format. All labels are typed by the pers
 A question is saved after you confirm it. Ctrl-C stops without saving the unfinished one. A bare
 reference belongs to the AI Act, write `gdpr Art. 9` for the GDPR.
 
+## Use of language models
+
+- The candidate questions were suggested by a language model.
+- In pass 1 the maintainer searched the references. A language model was used to word answer
+  points and to edit them for a consistent style, without changing references, and an
+  assistant checked the entries for inconsistencies and missing wording.
+- For q001, q002, q005, q006, q009, q010, q015 and q016, references and answer points were then
+  decided by a language model at the maintainer's request and reviewed by the maintainer. Their
+  `notes` say so, so that results can be reported separately for them.
+- Pass 2 is labelled without a language model and without pass 1.
+
 ## Workflow
 
-1. **Pass 1.** Label every question in `labeling/pass1.jsonl` by hand against the legal text.
-   A language model may suggest questions, but never references or answer points. Questions
+1. **Pass 1.** Label every question in `labeling/pass1.jsonl` against the legal text. A
+   language model may suggest questions, but never references or the content of answer points
+   (see "Use of language models"). Questions
    dropped under rule 2 move to `labeling/dropped.md`. Their ids are not reused.
 2. **Break.** At least a few days, so that pass 2 does not reproduce pass 1 from memory.
 3. **Pass 2.** `make pass2-template` writes the questions without labels, in a different
