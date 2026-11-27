@@ -112,8 +112,9 @@ reference belongs to the AI Act, write `gdpr Art. 9` for the GDPR.
 ## Workflow
 
 1. **Pass 1.** Label every question in `labeling/pass1.jsonl` against the legal text. A
-   language model may suggest questions, but never references or the content of answer points
-   (see "Use of language models"). Questions
+   language model may suggest questions. References and answer points are the maintainer's
+   responsibility, and any model assistance is recorded under "Use of language models".
+   Questions
    dropped under rule 2 move to `labeling/dropped.md`. Their ids are not reused.
 2. **Break.** At least a few days, so that pass 2 does not reproduce pass 1 from memory.
 3. **Pass 2.** `make pass2-template` writes the questions without labels, in a different

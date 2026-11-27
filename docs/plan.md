@@ -367,7 +367,7 @@ Code is written with the help of a coding assistant. Decisions and evaluation de
 
 ### Done by hand, not by a language model
 
-- The decisions in the gold test set and the labeling guide.
+- The decisions in the gold test set and the labeling guide. Model assistance in pass 1 is recorded in the labeling guide.
 - The metric definitions and the calibration of the judge.
 - The error analysis and the conclusions in the README.
 - The architecture decisions (vector store, agent approach, chunking).

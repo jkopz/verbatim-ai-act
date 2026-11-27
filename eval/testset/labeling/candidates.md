@@ -2,7 +2,7 @@
 
 Suggested by a language model as a starting point for pass 1, grouped by the intended
 category. The suggestions carry no references or answer points. Selecting, rewriting, dropping
-and labelling happen by hand under the rules in `../labeling-guide.md`. Questions taken over
+and labelling follow the rules in `../labeling-guide.md`. Questions taken over
 get an id in `pass1.jsonl`; this list is not updated afterwards.
 
 ## fact_lookup
