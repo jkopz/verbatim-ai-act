@@ -130,7 +130,7 @@ Ten phases. Each ends with a result that can be checked. Each phase is developed
 **Result.** A first test set that exists before the system.
 
 1. Define the schema with question, category, gold references, required answer points, as-of date and whether the question is answerable.
-2. Write 30 questions across all categories (see the evaluation section).
+2. Write 16 questions, two per category (see the evaluation section). Phase 6 expands the set.
 3. Write a labeling guide with rules for ambiguity.
 4. Split into dev and test. The test split is opened only for final results.
 5. Relabel everything after a break and measure the agreement between both passes.
@@ -167,7 +167,7 @@ Implementation notes. Annex sections are part of the reference path ("Annex VIII
 5. Citation validator. The quote must appear verbatim in the named article and the reference must exist.
 6. An abstention rule when retrieval finds nothing solid.
 
-**Done when** all 30 questions run through and a deliberately manipulated citation is rejected by the validator.
+**Done when** all 16 questions run through and a deliberately manipulated citation is rejected by the validator.
 
 **Key question.** Why is the citation validator more reliable than a second language model as a checker?
 
@@ -311,7 +311,7 @@ Every variant runs on the same test set, so every decision is backed by a number
 
 ### Quality gates in CI
 
-- Every pull request runs a smoke eval with about 15 questions on cached answers. It checks parser, search, validator and metric code, not the language model.
+- Every pull request runs a smoke eval on the dev split with cached answers (8 questions until phase 6 expands the set, about 15 afterwards). It checks parser, search, validator and metric code, not the language model.
 - Nightly or by hand the full evaluation runs against real providers. The result is stored as an artifact and copied into `results.md`.
 - A metric must not drop below the baseline by more than a tolerance. The tolerance is set after the first measurement and justified in an ADR.
 

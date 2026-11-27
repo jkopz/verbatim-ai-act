@@ -30,7 +30,7 @@ from verbatim.evaluation.testset import (
 
 PROCESSED = Path("data/processed")
 LABELING = Path("eval/testset/labeling")
-DEV_SIZE = 15
+DEV_SIZE = 8  # half of the 16 questions of test set v0
 SPLIT_SEED = 20261127
 TEMPLATE_SEED = 2
 

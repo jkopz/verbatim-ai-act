@@ -30,6 +30,8 @@ from verbatim.evaluation.testset import (
 Ask = Callable[[str], str]
 Say = Callable[[str], None]
 
+# Test set v0: two questions per category (docs/plan.md, phase 2).
+TARGET_PER_CATEGORY = 2
 PREVIEW_BLOCKS = 8
 PREVIEW_CHARS = 300
 _DROPPED_ROW = re.compile(r"^\| (q\d+) \| (.*?) (?<!\\)\| .* \|$")
@@ -313,9 +315,13 @@ def label_pass1(
             done |= {t for _, t in _dropped(dropped_path)}
             if candidate.text in done:
                 continue
+            in_category = sum(q.category == candidate.category for q in labelled())
+            total = TARGET_PER_CATEGORY * len(CATEGORIES)
             say(
-                f"\nCandidate {number} of {len(items)}, {len(labelled())} labelled. "
-                f"Suggested category: {candidate.category}\n{candidate.text}"
+                f"\nCandidate {number} of {len(items)}, {len(labelled())} of {total} labelled. "
+                f"Suggested category: {candidate.category} "
+                f"({candidate.category}: {in_category} of {TARGET_PER_CATEGORY})\n"
+                f"{candidate.text}"
             )
             choice = ""
             while True:

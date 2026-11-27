@@ -203,3 +203,9 @@ def test_references_are_accepted_in_any_case(
     _run1(directory, "", "", "", typed, "", "", "point", "", "", "", "", "q")
     [q] = load_testset(directory / "pass1.jsonl")
     assert q.gold_refs == (expected,)
+
+
+def test_header_shows_progress_in_the_category(directory: Path) -> None:
+    assert "definition: 0 of 2" in _run1(directory, "q")
+    _run1(directory, *LABEL, "q")
+    assert "definition: 1 of 2" in _run1(directory, "q")

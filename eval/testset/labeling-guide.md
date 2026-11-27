@@ -80,6 +80,10 @@ required and optional, and a `source_text` that repeats the question.
 says whether it can be used. `make check-testset FILE=eval/testset/labeling/pass1.jsonl` checks a
 whole file.
 
+## Size
+
+Version 0 of the test set has 16 questions, two per category. Phase 6 expands it.
+
 ## Labelling in the terminal
 
 `make label` goes through the candidate questions one by one and asks for category, as-of date,
@@ -108,7 +112,7 @@ reference belongs to the AI Act, write `gdpr Art. 9` for the GDPR.
    reconciling.
 5. **Reconcile.** Resolve each difference into `labeling/reconciled.jsonl`. Rewrite a question
    or drop it if the text does not settle it.
-6. **Split.** `make split` writes `dev.jsonl` and `test.jsonl` (15 and 15, stratified by
+6. **Split.** `make split` writes `dev.jsonl` and `test.jsonl` (8 and 8, stratified by
    category, fixed seed) and removes `reconciled.jsonl`. It runs once. Later corrections to the
    gold set happen only after review, and `test.jsonl` is never edited.
 
