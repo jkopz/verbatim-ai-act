@@ -80,6 +80,22 @@ required and optional, and a `source_text` that repeats the question.
 says whether it can be used. `make check-testset FILE=eval/testset/labeling/pass1.jsonl` checks a
 whole file.
 
+## Labelling in the terminal
+
+`make label` goes through the candidate questions one by one and asks for category, as-of date,
+references, answer points and notes. It shows the text of each reference, refuses unusable
+ones and takes care of ids and the file format. All labels are typed by the person labelling.
+
+| Command | Effect |
+| --- | --- |
+| `make label` | Next open candidate: label, rewrite, drop, skip or quit |
+| `make label NEW=1` | Add a question of your own |
+| `make label ID=q005` | Edit a question. Enter keeps the existing value |
+| `make label PASS=2` | Blind second pass, without suggestions and without pass 1 |
+
+A question is saved after you confirm it. Ctrl-C stops without saving the unfinished one. A bare
+reference belongs to the AI Act, write `gdpr Art. 9` for the GDPR.
+
 ## Workflow
 
 1. **Pass 1.** Label every question in `labeling/pass1.jsonl` by hand against the legal text.

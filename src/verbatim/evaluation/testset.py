@@ -29,6 +29,8 @@ CATEGORIES = (
     "legal_advice",
 )
 ACTS = ("ai-act", "gdpr")
+# Default as-of date of new questions, fixed in the labelling guide (rule 5).
+DEFAULT_AS_OF = "2026-11-27"
 FIELDS = (
     "id",
     "question",

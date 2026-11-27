@@ -1,5 +1,5 @@
 .PHONY: install lint format typecheck unit test fetch corpus \
-	check-testset lookup pass2-template agreement split
+	check-testset lookup label pass2-template agreement split
 
 install: ## Create .venv from uv.lock and install git hooks
 	uv sync --locked
@@ -37,6 +37,9 @@ check-testset: ## Validate the split, or one file: make check-testset [FILE=eval
 
 lookup: ## Show the text of a reference: make lookup ACT=ai-act REF="Art. 6(2)" [AS_OF=2026-11-27]
 	$(EVAL) lookup $(ACT) "$(REF)" $(if $(AS_OF),--as-of $(AS_OF))
+
+label: ## Label questions in the terminal: make label [PASS=2] [ID=q005] [NEW=1]
+	$(EVAL) label --pass $(or $(PASS),1) $(if $(ID),--id $(ID)) $(if $(NEW),--new)
 
 pass2-template: ## Write the blind template for the second labelling pass
 	$(EVAL) template $(LABELING)/pass1.jsonl $(LABELING)/pass2.jsonl

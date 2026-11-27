@@ -5,15 +5,20 @@ lookup ACT REF [--as-of]   show the text a reference covers
 template PASS1 PASS2       write the blind template for the second labelling pass
 agreement PASS1 PASS2 OUT  measure agreement between the two passes
 split SOURCE OUT_DIR       split the reconciled set into dev.jsonl and test.jsonl, once
+label [--pass 2] [--id ID] [--new]
+                           label question by question in the terminal
 """
 
 import argparse
+import contextlib
 import datetime
+import importlib
 import json
 import sys
 from pathlib import Path
 
 from verbatim.evaluation.agreement import blank_template, compare, render_markdown
+from verbatim.evaluation.label import label_pass1, label_pass2
 from verbatim.evaluation.split import write_split
 from verbatim.evaluation.testset import (
     Corpus,
@@ -24,6 +29,7 @@ from verbatim.evaluation.testset import (
 )
 
 PROCESSED = Path("data/processed")
+LABELING = Path("eval/testset/labeling")
 DEV_SIZE = 15
 SPLIT_SEED = 20261127
 TEMPLATE_SEED = 2
@@ -85,7 +91,13 @@ def main(argv: list[str] | None = None) -> int:
     split = commands.add_parser("split")
     split.add_argument("source", type=Path)
     split.add_argument("out_dir", type=Path)
+    label = commands.add_parser("label")
+    label.add_argument("--pass", dest="pass_number", type=int, choices=(1, 2), default=1)
+    label.add_argument("--id")
+    label.add_argument("--new", action="store_true")
     args = parser.parse_args(argv)
+    if args.command == "label" and args.new and (args.id or args.pass_number == 2):
+        parser.error("--new adds a question to pass 1 and cannot be combined")
 
     corpus = Corpus.load(PROCESSED)
     if args.command == "check":
@@ -107,6 +119,18 @@ def main(argv: list[str] | None = None) -> int:
         result = compare(load_testset(args.pass1), load_testset(args.pass2))
         args.out.write_text(render_markdown(result), encoding="utf-8")
         print(f"{args.out}: {len(result.differences)} differences to reconcile")
+        return 0
+    if args.command == "label":
+        with contextlib.suppress(ImportError):
+            importlib.import_module("readline")  # arrow keys and editing in input()
+        try:
+            if args.pass_number == 2:
+                label_pass2(LABELING, corpus, input, print, question_id=args.id)
+            else:
+                label_pass1(LABELING, corpus, input, print, question_id=args.id, new=args.new)
+        except InvalidTestsetError as error:
+            print(error, file=sys.stderr)
+            return 1
         return 0
     # split
     if _check([args.source], corpus):
