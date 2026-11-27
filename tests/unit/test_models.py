@@ -1,3 +1,5 @@
+from dataclasses import replace
+
 import pytest
 
 from verbatim.ingestion.models import (
@@ -6,12 +8,14 @@ from verbatim.ingestion.models import (
     Block,
     Document,
     Recital,
+    ambiguous_references,
     annex_ref,
     article_ref,
     document_from_dict,
     document_to_dict,
     iter_references,
     recital_ref,
+    reference_index,
 )
 
 
@@ -35,6 +39,9 @@ def test_article_ref(number: str, path: tuple[str, ...], expected: str) -> None:
         ("III", (), "Annex III"),
         ("III", ("1",), "Annex III, point 1"),
         ("III", ("1", "a"), "Annex III, point 1(a)"),
+        ("VIII", ("Section A",), "Annex VIII, Section A"),
+        ("VIII", ("Section A", "6"), "Annex VIII, Section A, point 6"),
+        ("XI", ("Section 1", "1", "a"), "Annex XI, Section 1, point 1(a)"),
     ],
 )
 def test_annex_ref(number: str, path: tuple[str, ...], expected: str) -> None:
@@ -102,3 +109,28 @@ def test_lookup_by_number() -> None:
     assert doc.recital("1").text.startswith("The purpose")
     with pytest.raises(KeyError):
         doc.article("999")
+
+
+def test_ambiguous_references_finds_a_label_reused_after_a_sibling() -> None:
+    blocks = (
+        Block(("1",), "first subparagraph"),
+        Block(("1", "a"), "x"),
+        Block(("1", "b"), "y"),
+        Block(("1",), "second subparagraph"),
+        Block(("1", "a"), "z"),
+        Block(("2",), "next paragraph"),
+    )
+    article = Article("43", "t", "III", None, None, None, blocks)
+    doc = replace(_sample(), articles=(article,), annexes=())
+    assert ambiguous_references(doc) == {"Art. 43(1)(a)"}
+
+
+def test_reference_index_maps_each_reference_to_the_blocks_below_it() -> None:
+    index = reference_index(_sample())
+    assert list(index) == list(iter_references(_sample()))
+    assert [b.text for b in index["Art. 5(1)"]] == [
+        "The following AI practices shall be prohibited:",
+        "the placing on the market ...",
+    ]
+    assert [b.text for b in index["Art. 5(1)(a)"]] == ["the placing on the market ..."]
+    assert [b.text for b in index["Recital 1"]] == ["The purpose of this Regulation ..."]

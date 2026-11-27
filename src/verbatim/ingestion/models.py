@@ -2,8 +2,10 @@
 
 A document is a list of articles, annexes and recitals. Articles and annexes hold their text as
 blocks in document order. A block's path locates it in the legal structure, for example
-("1", "ba") for Article 5(1)(ba). An empty path is text directly under the article or annex.
-Several blocks may share a path, for example the subparagraphs of one paragraph.
+("1", "ba") for Article 5(1)(ba), or ("Section A", "6") for Annex VIII, Section A, point 6.
+Numbered annex sections such as "1. Introduction" use the plain number. An empty path is text
+directly under the article or annex. Several blocks may share a path, for example the
+subparagraphs of one paragraph.
 """
 
 import json
@@ -80,7 +82,11 @@ def article_ref(number: str, path: tuple[str, ...]) -> str:
 
 
 def annex_ref(number: str, path: tuple[str, ...]) -> str:
+    """Render e.g. "Annex VIII, Section A, point 6", as the Act cites its own annexes."""
     ref = f"Annex {number}"
+    if path and path[0].startswith("Section "):
+        ref += f", {path[0]}"
+        path = path[1:]
     if path:
         ref += f", point {path[0]}" + "".join(f"({p})" for p in path[1:])
     return ref
@@ -90,25 +96,61 @@ def recital_ref(number: str) -> str:
     return f"Recital {number}"
 
 
+def reference_index(doc: Document) -> dict[str, list[Block]]:
+    """Every citable reference, in document order, with the blocks it covers.
+
+    A reference covers its own blocks and those of every level below it, so "Art. 5(1)"
+    includes the text of its points. Recitals become a single block with an empty path.
+    """
+    index: dict[str, list[Block]] = {}
+    for article in doc.articles:
+        index.setdefault(article_ref(article.number, ()), [])
+        for block in article.blocks:
+            for depth in range(len(block.path) + 1):
+                index.setdefault(article_ref(article.number, block.path[:depth]), []).append(block)
+    for annex in doc.annexes:
+        index.setdefault(annex_ref(annex.number, ()), [])
+        for block in annex.blocks:
+            for depth in range(len(block.path) + 1):
+                index.setdefault(annex_ref(annex.number, block.path[:depth]), []).append(block)
+    for recital in doc.recitals:
+        index[recital_ref(recital.number)] = [Block((), recital.text)]
+    return index
+
+
 def iter_references(doc: Document) -> Iterator[str]:
     """Every citable reference in the document, each once, in document order."""
-    seen: set[str] = set()
+    yield from reference_index(doc)
 
-    def emit(ref: str) -> Iterator[str]:
-        if ref not in seen:
-            seen.add(ref)
-            yield ref
 
-    for article in doc.articles:
-        for path in ((), *(b.path for b in article.blocks)):
-            for depth in range(len(path) + 1):
-                yield from emit(article_ref(article.number, path[:depth]))
-    for annex in doc.annexes:
-        for path in ((), *(b.path for b in annex.blocks)):
-            for depth in range(len(path) + 1):
-                yield from emit(annex_ref(annex.number, path[:depth]))
-    for recital in doc.recitals:
-        yield from emit(recital_ref(recital.number))
+def _reused_paths(blocks: tuple[Block, ...]) -> set[tuple[str, ...]]:
+    """Paths whose label reappears under the same parent after a different sibling.
+
+    Such a path stands for two different provisions, so its reference is ambiguous.
+    """
+    last: dict[tuple[str, ...], str] = {}
+    seen: dict[tuple[str, ...], set[str]] = {}
+    reused: set[tuple[str, ...]] = set()
+    for block in blocks:
+        for depth in range(1, len(block.path) + 1):
+            parent, label = block.path[: depth - 1], block.path[depth - 1]
+            if last.get(parent) != label:
+                if label in seen.setdefault(parent, set()):
+                    reused.add(block.path[:depth])
+                seen[parent].add(label)
+                last[parent] = label
+    return reused
+
+
+def ambiguous_references(doc: Document) -> set[str]:
+    """References that name more than one provision, for example Art. 43(1)(a).
+
+    Article 43(1) has points (a) and (b) in two subparagraphs, and paths do not record
+    subparagraphs. Cite the enclosing level instead.
+    """
+    refs = {article_ref(a.number, p) for a in doc.articles for p in _reused_paths(a.blocks)}
+    refs |= {annex_ref(a.number, p) for a in doc.annexes for p in _reused_paths(a.blocks)}
+    return refs
 
 
 # --- Serialisation -------------------------------------------------------------------------

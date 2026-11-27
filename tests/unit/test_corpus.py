@@ -8,10 +8,8 @@ from pathlib import Path
 import pytest
 
 from verbatim.ingestion.models import (
-    Block,
     Document,
-    annex_ref,
-    article_ref,
+    ambiguous_references,
     iter_references,
     load_document,
 )
@@ -59,47 +57,12 @@ def test_structure_is_consistent(celex: str) -> None:
         assert "—————" not in block.text
 
 
-def _reused_labels(blocks: tuple[Block, ...]) -> set[tuple[str, ...]]:
-    """Paths whose label reappears under the same parent after a different sibling.
-
-    Such a path stands for two different provisions, so its reference is ambiguous.
-    """
-    last: dict[tuple[str, ...], str] = {}
-    seen: dict[tuple[str, ...], set[str]] = {}
-    reused: set[tuple[str, ...]] = set()
-    for block in blocks:
-        for depth in range(1, len(block.path) + 1):
-            parent, label = block.path[: depth - 1], block.path[depth - 1]
-            if last.get(parent) != label:
-                if label in seen.setdefault(parent, set()):
-                    reused.add(block.path[:depth])
-                seen[parent].add(label)
-                last[parent] = label
-    return reused
-
-
-def _ambiguous_references(doc: Document) -> set[str]:
-    refs = {article_ref(a.number, p) for a in doc.articles for p in _reused_labels(a.blocks)}
-    refs |= {annex_ref(a.number, p) for a in doc.annexes for p in _reused_labels(a.blocks)}
-    return refs
-
-
-# Known ambiguities, documented in docs/adr/0003-corpus-version.md. Annexes VII, VIII and X
-# restart their numbering per section, and Art. 43(1) has points (a) and (b) in two
-# subparagraphs. The structural path does not yet carry sections or subparagraphs.
-_ANNEX_SECTIONS = {
-    "Annex VII, point a",
-    "Annex VII, point b",
-    "Annex VII, point c",
-    "Annex X, point a",
-    "Annex X, point b",
-    "Art. 43(1)(a)",
-    "Art. 43(1)(b)",
-}
+# Known ambiguity, documented in docs/adr/0003-corpus-version.md: Art. 43(1) has points (a)
+# and (b) in two subparagraphs, and the structural path does not carry subparagraphs.
+_ART_43 = {"Art. 43(1)(a)", "Art. 43(1)(b)"}
 KNOWN_AMBIGUOUS = {
-    "02024R1689-20260727": _ANNEX_SECTIONS
-    | {f"Annex VIII, point {n}" for n in (1, 2, 3, 4, 5, 6, 8)},
-    "32024R1689": _ANNEX_SECTIONS | {f"Annex VIII, point {n}" for n in range(1, 10)},
+    "02024R1689-20260727": _ART_43,
+    "32024R1689": _ART_43,
     "02016R0679-20160504": set[str](),
     "32016R0679": set[str](),
 }
@@ -107,7 +70,7 @@ KNOWN_AMBIGUOUS = {
 
 @pytest.mark.parametrize("celex", sorted(KNOWN_AMBIGUOUS))
 def test_references_are_unambiguous_except_known_cases(celex: str) -> None:
-    assert _ambiguous_references(_doc(celex)) == KNOWN_AMBIGUOUS[celex]
+    assert ambiguous_references(_doc(celex)) == KNOWN_AMBIGUOUS[celex]
 
 
 def test_inserted_articles_sit_in_their_chapters() -> None:
@@ -156,6 +119,19 @@ def test_processed_file_matches_a_fresh_parse(source: Source) -> None:
     if not raw.exists():
         pytest.skip("raw file not downloaded, run `make fetch`")
     assert parse_document(raw.read_text("utf-8"), source) == _doc(source.celex)
+
+
+def test_annex_sections_are_part_of_the_reference() -> None:
+    refs = set(iter_references(_doc("02024R1689-20260727")))
+    for ref in [
+        "Annex I, Section A",
+        "Annex VII, point 3(a)",
+        "Annex VIII, Section C, point 5",
+        "Annex X, point 1(a)",
+        "Annex XI, Section 1, point 2(a)",
+    ]:
+        assert ref in refs
+    assert "Annex VIII, point 1" not in refs
 
 
 @pytest.mark.parametrize("celex", ["02024R1689-20260727", "32024R1689"])

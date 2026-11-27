@@ -137,6 +137,8 @@ Ten phases. Each ends with a result that can be checked. Each phase is developed
 
 **Done when** a test confirms that every gold reference exists in the corpus.
 
+Implementation notes. Annex sections are part of the reference path ("Annex VIII, Section A, point 6"), so gold references are unambiguous except Art. 43(1)(a)/(b), which is cited as Art. 43(1). The `as_of` date of a question selects the version of the text. Tools and workflow are described in `eval/testset/labeling-guide.md`. The phase lands in two pull requests, tooling first and the labelled data after the second pass.
+
 **Key question.** Why may a language model suggest questions but not decide the gold answers?
 
 ### Phase 3 Retrieval baseline

@@ -27,7 +27,10 @@ make test      # lint, type check, tests
 
 ## How the evaluation works
 
-*Coming in phases 2 and 6: test set, metrics, judge and its calibration.*
+The gold test set is written by hand before the system exists, labelled twice and split
+into dev and test. See the [labelling guide](eval/testset/labeling-guide.md).
+
+*Metrics, judge and its calibration are coming in phase 6.*
 
 ## Error analysis and limits
 
