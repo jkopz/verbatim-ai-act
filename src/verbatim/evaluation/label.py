@@ -168,7 +168,7 @@ def _ask_refs(
             if refs:
                 say(f"  removed {refs.pop()}")
         else:
-            ref = _parse_ref(text)
+            ref = corpus.spelling(_parse_ref(text), as_of)
             if ref in refs:
                 say("  already listed")
             elif problem := corpus.problem(ref, as_of):

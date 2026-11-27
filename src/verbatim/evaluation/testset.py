@@ -212,6 +212,18 @@ class Corpus:
             return None
         return max(candidates, key=lambda v: (v.doc.version_date, v.doc.status == "consolidated"))
 
+    def spelling(self, ref: GoldRef, as_of: str) -> GoldRef:
+        """`ref` as the corpus writes it, ignoring case and repeated spaces.
+
+        Returned unchanged if no single reference of that version matches.
+        """
+        version = self._version(ref, as_of)
+        text = " ".join(ref.ref.split())
+        if version is None or text in version.index:
+            return GoldRef(ref.act, text)
+        matches = [known for known in version.index if known.casefold() == text.casefold()]
+        return GoldRef(ref.act, matches[0] if len(matches) == 1 else text)
+
     def lookup(self, ref: GoldRef, as_of: str) -> Hit:
         version = self._version(ref, as_of)
         if version is None:

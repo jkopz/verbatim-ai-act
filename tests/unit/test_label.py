@@ -186,3 +186,20 @@ def test_pass2_never_reads_pass1_and_keeps_ids_and_order(directory: Path) -> Non
     assert saved[1]["category"] == ""
     assert "Suggested" not in "\n".join(output)
     assert (directory / "pass1.jsonl").read_text("utf-8") == "not even json"
+
+
+@pytest.mark.parametrize(
+    ("typed", "expected"),
+    [
+        ("ANNEX IV", GoldRef("ai-act", "Annex IV")),
+        ("annex viii,  section a, point 6", GoldRef("ai-act", "Annex VIII, Section A, point 6")),
+        ("art. 5(1)(BA)", GoldRef("ai-act", "Art. 5(1)(ba)")),
+        ("GDPR art. 9", GoldRef("gdpr", "Art. 9")),
+    ],
+)
+def test_references_are_accepted_in_any_case(
+    directory: Path, typed: str, expected: GoldRef
+) -> None:
+    _run1(directory, "", "", "", typed, "", "", "point", "", "", "", "", "q")
+    [q] = load_testset(directory / "pass1.jsonl")
+    assert q.gold_refs == (expected,)
