@@ -96,25 +96,31 @@ def recital_ref(number: str) -> str:
     return f"Recital {number}"
 
 
+def reference_index(doc: Document) -> dict[str, list[Block]]:
+    """Every citable reference, in document order, with the blocks it covers.
+
+    A reference covers its own blocks and those of every level below it, so "Art. 5(1)"
+    includes the text of its points. Recitals become a single block with an empty path.
+    """
+    index: dict[str, list[Block]] = {}
+    for article in doc.articles:
+        index.setdefault(article_ref(article.number, ()), [])
+        for block in article.blocks:
+            for depth in range(len(block.path) + 1):
+                index.setdefault(article_ref(article.number, block.path[:depth]), []).append(block)
+    for annex in doc.annexes:
+        index.setdefault(annex_ref(annex.number, ()), [])
+        for block in annex.blocks:
+            for depth in range(len(block.path) + 1):
+                index.setdefault(annex_ref(annex.number, block.path[:depth]), []).append(block)
+    for recital in doc.recitals:
+        index[recital_ref(recital.number)] = [Block((), recital.text)]
+    return index
+
+
 def iter_references(doc: Document) -> Iterator[str]:
     """Every citable reference in the document, each once, in document order."""
-    seen: set[str] = set()
-
-    def emit(ref: str) -> Iterator[str]:
-        if ref not in seen:
-            seen.add(ref)
-            yield ref
-
-    for article in doc.articles:
-        for path in ((), *(b.path for b in article.blocks)):
-            for depth in range(len(path) + 1):
-                yield from emit(article_ref(article.number, path[:depth]))
-    for annex in doc.annexes:
-        for path in ((), *(b.path for b in annex.blocks)):
-            for depth in range(len(path) + 1):
-                yield from emit(annex_ref(annex.number, path[:depth]))
-    for recital in doc.recitals:
-        yield from emit(recital_ref(recital.number))
+    yield from reference_index(doc)
 
 
 def _reused_paths(blocks: tuple[Block, ...]) -> set[tuple[str, ...]]:

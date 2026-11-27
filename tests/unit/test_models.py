@@ -15,6 +15,7 @@ from verbatim.ingestion.models import (
     document_to_dict,
     iter_references,
     recital_ref,
+    reference_index,
 )
 
 
@@ -122,3 +123,14 @@ def test_ambiguous_references_finds_a_label_reused_after_a_sibling() -> None:
     article = Article("43", "t", "III", None, None, None, blocks)
     doc = replace(_sample(), articles=(article,), annexes=())
     assert ambiguous_references(doc) == {"Art. 43(1)(a)"}
+
+
+def test_reference_index_maps_each_reference_to_the_blocks_below_it() -> None:
+    index = reference_index(_sample())
+    assert list(index) == list(iter_references(_sample()))
+    assert [b.text for b in index["Art. 5(1)"]] == [
+        "The following AI practices shall be prohibited:",
+        "the placing on the market ...",
+    ]
+    assert [b.text for b in index["Art. 5(1)(a)"]] == ["the placing on the market ..."]
+    assert [b.text for b in index["Recital 1"]] == ["The purpose of this Regulation ..."]
