@@ -37,7 +37,9 @@ FIELDS = (
     "as_of",
     "gold_refs",
     "answer_points",
+    "optional_points",
     "notes",
+    "source_text",
 )
 
 
@@ -64,6 +66,8 @@ class Question:
     gold_refs: tuple[GoldRef, ...]
     answer_points: tuple[str, ...]
     notes: str
+    optional_points: tuple[str, ...] = ()
+    source_text: str = ""
 
 
 # --- Parsing -------------------------------------------------------------------------------
@@ -92,6 +96,13 @@ def _list(data: dict[str, Any], key: str) -> list[Any]:
     return value  # pyright: ignore[reportUnknownVariableType]
 
 
+def _points(data: dict[str, Any], key: str) -> tuple[str, ...]:
+    points = _list(data, key)
+    if not all(isinstance(p, str) and p.strip() for p in points):
+        raise InvalidTestsetError(f"{key} must be non-empty strings")
+    return tuple(points)
+
+
 def parse_question(data: Any) -> Question:
     if not isinstance(data, dict):
         raise InvalidTestsetError("each line must be a JSON object")
@@ -113,9 +124,8 @@ def parse_question(data: Any) -> Question:
         datetime.date.fromisoformat(as_of)
     except ValueError:
         raise InvalidTestsetError(f"as_of must be a date like 2026-11-27, got {as_of!r}") from None
-    points = _list(fields, "answer_points")
-    if not all(isinstance(p, str) and p.strip() for p in points):
-        raise InvalidTestsetError("answer_points must be non-empty strings")
+    points = _points(fields, "answer_points")
+    optional = _points(fields, "optional_points")
 
     return Question(
         id=_string(fields, "id"),
@@ -124,8 +134,10 @@ def parse_question(data: Any) -> Question:
         answerable=answerable,
         as_of=as_of,
         gold_refs=tuple(_gold_ref(item) for item in _list(fields, "gold_refs")),
-        answer_points=tuple(points),
+        answer_points=points,
         notes=_string(fields, "notes", allow_empty=True),
+        optional_points=optional,
+        source_text=_string(fields, "source_text", allow_empty=True),
     )
 
 
@@ -142,7 +154,8 @@ def load_testset(path: Path) -> list[Question]:
 
 
 def question_to_dict(question: Question) -> dict[str, Any]:
-    return asdict(question)
+    data = asdict(question)
+    return {field: data[field] for field in FIELDS}
 
 
 def save_testset(path: Path, questions: list[Question]) -> None:
@@ -242,6 +255,13 @@ def validate(questions: list[Question], corpus: Corpus) -> list[str]:
             error("answerable question needs at least one gold reference")
         if q.answerable and not q.answer_points:
             error("answerable question needs at least one answer point")
+        for point in q.optional_points:
+            if point in q.answer_points:
+                error(f"answer point listed as required and optional: {point}")
+        if q.source_text and q.source_text == q.question:
+            error("source_text repeats the question, leave it empty")
+        if q.gold_refs and all(r.ref.startswith("Recital ") for r in q.gold_refs):
+            error("a recital is never the only gold reference")
 
         seen_refs: set[GoldRef] = set()
         for ref in q.gold_refs:

@@ -27,7 +27,9 @@ def _row(id: str, ref: str) -> dict[str, Any]:
         "as_of": "2026-11-27",
         "gold_refs": [{"act": "ai-act", "ref": ref}],
         "answer_points": ["point"],
+        "optional_points": [],
         "notes": "",
+        "source_text": "",
     }
 
 

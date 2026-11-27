@@ -94,5 +94,7 @@ def test_blank_template_keeps_only_id_and_question_in_a_fixed_shuffled_order() -
         "as_of": "",
         "gold_refs": [],
         "answer_points": [],
+        "optional_points": [],
         "notes": "",
+        "source_text": "",
     }

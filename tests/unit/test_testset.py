@@ -31,7 +31,9 @@ def _question(**changes: Any) -> dict[str, Any]:
         "as_of": "2026-11-27",
         "gold_refs": [{"act": "ai-act", "ref": "Art. 113"}],
         "answer_points": ["2 December 2027"],
+        "optional_points": [],
         "notes": "",
+        "source_text": "",
     }
     data.update(changes)
     return data
@@ -67,6 +69,8 @@ def test_parse_question() -> None:
         ({"gold_refs": [{"act": "dsa", "ref": "Art. 1"}]}, "act"),
         ({"gold_refs": [{"ref": "Art. 1"}]}, "gold_refs"),
         ({"answer_points": "2 December 2027"}, "answer_points"),
+        ({"optional_points": [""]}, "optional_points"),
+        ({"source_text": None}, "source_text"),
         ({"extra": 1}, "unknown field"),
     ],
 )
@@ -117,8 +121,9 @@ def test_as_of_selects_the_version_of_the_text() -> None:
 
 
 def test_recitals_come_from_the_official_journal() -> None:
-    assert _errors(_question(gold_refs=[{"act": "ai-act", "ref": "Recital 12"}])) == []
-    assert _errors(_question(gold_refs=[{"act": "gdpr", "ref": "Recital 26"}])) == []
+    article = {"act": "ai-act", "ref": "Art. 3"}
+    assert _errors(_question(gold_refs=[article, {"act": "ai-act", "ref": "Recital 12"}])) == []
+    assert _errors(_question(gold_refs=[article, {"act": "gdpr", "ref": "Recital 26"}])) == []
 
 
 def test_ambiguous_reference_is_rejected() -> None:
@@ -145,6 +150,28 @@ def test_not_answerable_matches_its_category() -> None:
     ]
     assert _errors(_question(category="not_answerable")) == [
         "q001: category not_answerable requires answerable false"
+    ]
+
+
+def test_recital_is_never_the_only_gold_reference() -> None:
+    recital = {"act": "ai-act", "ref": "Recital 12"}
+    assert _errors(_question(gold_refs=[recital])) == [
+        "q001: a recital is never the only gold reference"
+    ]
+    assert _errors(_question(gold_refs=[{"act": "ai-act", "ref": "Art. 3"}, recital])) == []
+
+
+def test_source_text_holds_only_a_different_original_wording() -> None:
+    assert _errors(_question(source_text="when does high risk apply")) == []
+    same = _question()["question"]
+    assert _errors(_question(source_text=same)) == [
+        "q001: source_text repeats the question, leave it empty"
+    ]
+
+
+def test_a_point_is_either_required_or_optional() -> None:
+    assert _errors(_question(optional_points=["2 December 2027"])) == [
+        "q001: answer point listed as required and optional: 2 December 2027"
     ]
 
 

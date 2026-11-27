@@ -51,6 +51,8 @@ class Agreement:
     refs_jaccard: float
     answer_points_first: int
     answer_points_second: int
+    optional_points_first: int
+    optional_points_second: int
     differences: tuple[Difference, ...]
 
 
@@ -95,6 +97,8 @@ def compare(first: list[Question], second: list[Question]) -> Agreement:
         refs_jaccard=sum(jaccard(_refs(a), _refs(b)) for a, b in pairs) / n,
         answer_points_first=sum(len(a.answer_points) for a, _ in pairs),
         answer_points_second=sum(len(b.answer_points) for _, b in pairs),
+        optional_points_first=sum(len(a.optional_points) for a, _ in pairs),
+        optional_points_second=sum(len(b.optional_points) for _, b in pairs),
         differences=tuple(differences),
     )
 
@@ -120,9 +124,10 @@ def render_markdown(result: Agreement) -> str:
         f"| Gold references, identical sets | {result.refs_exact:.0%} | |",
         f"| Gold references, mean Jaccard | {result.refs_jaccard:.2f} | |",
         "",
-        f"Answer points: {result.answer_points_first} in pass 1, "
-        f"{result.answer_points_second} in pass 2. They are free text and are compared by hand "
-        "while reconciling.",
+        f"Required answer points: {result.answer_points_first} in pass 1, "
+        f"{result.answer_points_second} in pass 2. Optional points: "
+        f"{result.optional_points_first} in pass 1, {result.optional_points_second} in pass 2. "
+        "Points are free text and are compared by hand while reconciling.",
         "",
         "## Differences",
         "",
@@ -146,7 +151,9 @@ def blank_template(questions: list[Question], seed: int) -> list[dict[str, Any]]
             "as_of": "",
             "gold_refs": [],
             "answer_points": [],
+            "optional_points": [],
             "notes": "",
+            "source_text": "",
         }
         for q in questions
     ]
