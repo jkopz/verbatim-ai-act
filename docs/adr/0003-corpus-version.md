@@ -53,10 +53,13 @@ exactly the text it was checked against.
 - Recitals of the original GDPR do not reflect the corrigenda. This is recorded as a known
   limitation.
 - Known parser limitations, pinned in `tests/unit/test_corpus.py`:
-  - Annexes VII, VIII and X restart their point numbering per section, and Article 43(1) of
-    the AI Act has points (a) and (b) in two subparagraphs. The structural path does not yet
-    record sections or subparagraphs, so references such as "Annex VIII, point 1" are
-    ambiguous.
+  - Section headings in annexes ("Section A", "1. Introduction") are a level of the
+    structural path, because Annexes VII, VIII and X restart their point numbering per
+    section. References read "Annex VIII, Section A, point 6".
+  - Annexes I, VII and XI list some points as numbered plain text ("3.1.", "2. Directive
+    ..."). References to them stop at the enclosing section.
+  - Article 43(1) of the AI Act has points (a) and (b) in two subparagraphs. The path does not
+    record subparagraphs, so "Art. 43(1)(a)" is ambiguous and is cited as "Art. 43(1)".
   - Articles 102 to 110 of the AI Act amend other regulations and quote their text. The
     quoted parts are kept as plain text, which leaves a few fragment blocks such as `;`.
 - New consolidated versions appear when an act is amended again. The source manifest pins

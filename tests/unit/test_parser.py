@@ -178,3 +178,35 @@ def test_quoted_paragraph_of_another_act_is_not_a_paragraph_of_this_one() -> Non
     doc = _parse("cons_art_105.html")
     assert all(not p or not p[0].startswith("‘") for p in _paths(doc, "105"))
     assert "‘5." in " ".join(b.text for b in doc.article("105").blocks)
+
+
+# --- Sections in annexes -----------------------------------------------------------------
+
+
+def _annex_paths(doc: Document, annex: str) -> list[tuple[str, ...]]:
+    return [b.path for b in doc.annex(annex).blocks]
+
+
+def test_annex_section_heading_starts_a_path_level() -> None:
+    annex = _parse("cons_annex_viii.html").annex("VIII")
+    assert annex.blocks[0].path == ("Section A",)
+    assert annex.blocks[0].text.startswith("Section A — Information to be submitted by providers")
+    paths = _annex_paths(_parse("cons_annex_viii.html"), "VIII")
+    assert ("Section A", "1") in paths
+    assert ("Section B", "1") in paths  # the numbering restarts, the paths differ
+
+
+def test_annex_subtitle_after_a_section_heading_is_text_of_that_section() -> None:
+    annex = _parse("cons_annex_xi.html").annex("XI")
+    first, second = annex.blocks[:2]
+    assert (first.path, first.text) == (("Section 1",), "Section 1")
+    assert second.path == ("Section 1",)
+    assert second.text.startswith("Information to be provided by all providers")
+    assert ("Section 1", "1", "a") in _annex_paths(_parse("cons_annex_xi.html"), "XI")
+
+
+def test_oj_annex_numbered_section_heading() -> None:
+    annex = _parse("oj_annex_vii.html").annex("VII")
+    assert (annex.blocks[0].path, annex.blocks[0].text) == (("1",), "1. Introduction")
+    assert ("3", "a") in _annex_paths(_parse("oj_annex_vii.html"), "VII")
+    assert annex.title.startswith("Conformity based on an assessment")

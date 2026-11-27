@@ -8,6 +8,7 @@ EUR-Lex uses two layouts, and the parser handles both in one recursive walk:
 | Point     | two-column table, label in 1st cell | div.grid-list, label in column 1    |
 | Headings  | p.oj-ti-section-1 / -2              | p.title-division-1 / -2             |
 | Footnote  | a > span.oj-note-tag                | a > span.superscript                |
+| Annex sec | p.oj-ti-grseq-1                     | p.title-gr-seq-level-1              |
 
 Amendment markers (p.modref, inline ►C1 ... ◄) are dropped. Deleted provisions in consolidated
 texts consist only of a marker and a dash line, so they disappear with it.
@@ -31,6 +32,9 @@ _OJ_PARAGRAPH_LABEL = re.compile(r"^(\d+[a-z]*)\.(?:\s+|$)")
 # (a) (ba) (iii) (1) 1. 1a. A.
 _POINT_LABEL = re.compile(r"^\(?(\d+[a-z]*|[a-z]{1,4}|[A-Z])\)?\.?$")
 _DASHES = {"—", "–", "-", "•"}
+# "Section A — ...", "Section 1", "1. Introduction". Other headings (subtitles) carry no label.
+_SECTION_LABEL = re.compile(r"^(?:(Section [A-Z0-9]+)\b|(\d+)\.(?:\s|$))")
+_ANNEX_SECTION = {"oj-ti-grseq-1", "title-gr-seq-level-1"}
 
 _HEADING_1 = {"oj-ti-section-1", "title-division-1"}
 _HEADING_2 = {"oj-ti-section-2", "title-division-2"}
@@ -175,9 +179,11 @@ def _walk(node: Tag, path: tuple[str, ...]) -> Iterator[Block]:
     Inline content is collected until the next block-level element, so that text split by
     spans (italics, exponents) stays one block. After a paragraph, following siblings belong
     to that paragraph until the next one starts: consolidated texts place later
-    subparagraphs and points next to the paragraph's div instead of inside it.
+    subparagraphs and points next to the paragraph's div instead of inside it. Section
+    headings in annexes work the same way one level up: everything after "Section A" belongs
+    to that section, because annexes restart their point numbering per section.
     """
-    current = path
+    base = current = path
     inline: list[str] = []
     for child in node.children:
         if isinstance(child, Comment):
@@ -193,14 +199,24 @@ def _walk(node: Tag, path: tuple[str, ...]) -> Iterator[Block]:
         if text := clean_text("".join(inline)):
             yield Block(current, text)
         inline = []
-        label = _paragraph_label(child)
-        if label is None:
+        if (section := _section_label(child)) is not None:
+            base = current = (*path, section)
             yield from _walk_tag(child, current)
-        else:
-            current = (*path, label)
+        elif (label := _paragraph_label(child)) is not None:
+            current = (*base, label)
             yield from _paragraph(child, current)
+        else:
+            yield from _walk_tag(child, current)
     if text := clean_text("".join(inline)):
         yield Block(current, text)
+
+
+def _section_label(tag: Tag) -> str | None:
+    """Return "Section A" or "1" if `tag` is a labelled section heading of an annex, else None."""
+    if tag.name != "p" or not _classes(tag) & _ANNEX_SECTION:
+        return None
+    m = _SECTION_LABEL.match(clean_text(tag.get_text()))
+    return (m.group(1) or m.group(2)) if m else None
 
 
 def _paragraph_label(tag: Tag) -> str | None:
